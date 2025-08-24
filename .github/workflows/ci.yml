@@ -22,10 +22,14 @@ jobs:
           pip install -r requirements.txt || true
 
       - name: Show migrations plan
-        run: python3 manage.py showmigrations --plan
+        run: |
+          echo "Workspace: $GITHUB_WORKSPACE"
+          ls -la "$GITHUB_WORKSPACE"
+          find "$GITHUB_WORKSPACE" -maxdepth 3 -type f -name manage.py -print || true
+          python3 "$GITHUB_WORKSPACE/manage.py" showmigrations --plan
 
       - name: Apply migrations
-        run: python3 manage.py migrate --noinput
+        run: python3 "$GITHUB_WORKSPACE/manage.py" migrate --noinput
 
       - name: Run tests
-        run: python3 manage.py test --verbosity=2
+        run: python3 "$GITHUB_WORKSPACE/manage.py" test --verbosity=2
