@@ -26,21 +26,39 @@ jobs:
           echo "Workspace: $GITHUB_WORKSPACE"
           ls -la "$GITHUB_WORKSPACE"
           find "$GITHUB_WORKSPACE" -maxdepth 3 -type f -name manage.py -print || true
-          MANAGE_PY="$GITHUB_WORKSPACE/../manage.py"
-          echo "Using manage.py at: $MANAGE_PY"
-          if [ -f "$MANAGE_PY" ]; then
-            python3 "$MANAGE_PY" showmigrations --plan
-          else
-            echo "manage.py not found at $MANAGE_PY" >&2
+          CANDIDATES=("$GITHUB_WORKSPACE/manage.py" "$GITHUB_WORKSPACE/../manage.py")
+          MANAGE_PY=""
+          for c in "${CANDIDATES[@]}"; do
+            if [ -f "$c" ]; then
+              MANAGE_PY="$c"
+              break
+            fi
+          done
+          if [ -z "$MANAGE_PY" ]; then
+            echo "manage.py not found in candidates: ${CANDIDATES[*]}" >&2
             exit 2
           fi
+          echo "Using manage.py at: $MANAGE_PY"
+          python3 "$MANAGE_PY" showmigrations --plan
 
       - name: Apply migrations
         run: |
-          MANAGE_PY="$GITHUB_WORKSPACE/../manage.py"
+          CANDIDATES=("$GITHUB_WORKSPACE/manage.py" "$GITHUB_WORKSPACE/../manage.py")
+          for c in "${CANDIDATES[@]}"; do
+            if [ -f "$c" ]; then
+              MANAGE_PY="$c"
+              break
+            fi
+          done
           python3 "$MANAGE_PY" migrate --noinput
 
       - name: Run tests
         run: |
-          MANAGE_PY="$GITHUB_WORKSPACE/../manage.py"
+          CANDIDATES=("$GITHUB_WORKSPACE/manage.py" "$GITHUB_WORKSPACE/../manage.py")
+          for c in "${CANDIDATES[@]}"; do
+            if [ -f "$c" ]; then
+              MANAGE_PY="$c"
+              break
+            fi
+          done
           python3 "$MANAGE_PY" test --verbosity=2
