@@ -1,0 +1,241 @@
+{% load fmt_br %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custos Diretos - {{ projeto.nome }}</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+        h1, h2, h3 { color: #1f618d; }
+        h1 { font-size: 2.5em; margin-bottom: 5px; }
+        p.subtitle { color: #666; font-style: italic; margin-bottom: 20px; }
+        
+        .metric-cards-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            gap: 15px;
+        }
+        .metric-card {
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            width: calc(25% - 15px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .metric-card-title {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .metric-card-value {
+            font-size: 1.6em;
+            font-weight: bold;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .card-red { background: linear-gradient(145deg, #ffe6e6, #ffcccc); }
+        .card-red .metric-card-value { color: #dc3545; }
+        .card-blue { background: linear-gradient(145deg, #e6f2ff, #cce5ff); }
+        .card-blue .metric-card-value { color: #0056b3; }
+        .card-green { background: linear-gradient(145deg, #f0fff0, #d9f7d9); }
+        .card-green .metric-card-value { color: #28a745; }
+        .card-orange { background: linear-gradient(145deg, #fff5e6, #ffe0b3); }
+        .card-orange .metric-card-value { color: #ff7f00; }
+        
+        .table-container {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        table.styled-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table.styled-table thead {
+            background-color: #e5e7eb;
+        }
+        table.styled-table th, table.styled-table td {
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 1em;
+        }
+        table.styled-table th {
+            text-align: center;
+        }
+        table.styled-table td.area-eq-total,
+        table.styled-table td.area-constr-total {
+            text-align: center !important;
+        }
+        table.styled-table input[type="text"], table.styled-table input[type="number"] {
+            width: 100%;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            text-align: right;
+        }
+        table.styled-table td:nth-child(4), table.styled-table td:nth-child(5) {
+            text-align: right;
+        }
+        table.styled-table td:nth-child(3) {
+            text-align: center;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .navigation-buttons button {
+            background-color: #6c757d;
+            border: none;
+        }
+        .navigation-buttons button:hover {
+            background-color: #5a6268;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        button.action-button {
+            background-color: #28a745;
+        }
+        button.action-button:hover {
+            background-color: #218838;
+        }
+        button.delete-button {
+            background-color: #dc3545;
+        }
+        button.delete-button:hover {
+            background-color: #c82333;
+        }
+
+        /* Estilo da Tabela de Etapas da Obra */
+        .etapas-table-container table {
+            border: none;
+            border-bottom: 1px solid #ddd;
+        }
+        .etapas-table-container th, .etapas-table-container td {
+            border: none;
+            border-bottom: 1px solid #eee;
+        }
+        .etapas-table-container th:nth-child(2), .etapas-table-container td:nth-child(2),
+        .etapas-table-container th:nth-child(3), .etapas-table-container td:nth-child(3) {
+            background-color: #fff;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    {% include 'viabilidade/_menu_lateral.html' %}
+    <div class="container">
+        <h1>🏗️ Custos Diretos</h1>
+    <p class="subtitle">Projeto: {{ projeto.nome }}</p>
+
+        <h2 style="text-align:left;">Análise e Resumo Financeiro</h2>
+        <div class="metric-cards-container" style="flex-wrap:nowrap; gap:32px; justify-content:center; align-items:stretch;">
+            <div class="metric-card card-red">
+                <div class="metric-card-title">Custo Direto do Projeto</div>
+                <div class="metric-card-value">R$ <span id="card_custo_direto">{{ resultados.custo_direto_total|fmt_br }}</span></div>
+            </div>
+            <div class="metric-card card-blue">
+                <div class="metric-card-title">Custo Médio / Unidade</div>
+                <div class="metric-card-value">R$ <span id="card_custo_unidade">{{ resultados.custo_direto_total|div:projeto.num_unidades|fmt_br }}</span></div>
+            </div>
+            <div class="metric-card card-green">
+                <div class="metric-card-title">Custo / m² (Área Constr.)</div>
+                <div class="metric-card-value">R$ <span id="card_custo_m2">{{ resultados.custo_direto_total|div:resultados.area_construida_total|fmt_br }}</span></div>
+            </div>
+            <div class="metric-card card-orange">
+                <div class="metric-card-title">Área Construída Total</div>
+                <div class="metric-card-value"><span id="card_area_construida">{{ resultados.area_construida_total|floatformat:2 }}</span> m²</div>
+            </div>
+        </div>
+
+        <!-- Bloco Resumo de Áreas em cards alinhados -->
+        <h3 style="margin:32px auto 8px auto; text-align:left; color:#1f618d; font-size:1.5em; font-weight:700; letter-spacing:0.5px;">Resumo de Áreas</h3>
+        <div class="metric-cards-container" style="flex-wrap:nowrap; gap:32px; justify-content:center; align-items:stretch; margin-bottom: 16px;">
+            <div class="metric-card card-orange">
+                <div class="metric-card-title">Área Total Construída</div>
+    <div class="metric-card-value"><span id="card_area_construida_2">{{ resultados.area_construida_total|fmt_br }}</span> m²</div>
+            </div>
+            <div class="metric-card card-blue">
+                <div class="metric-card-title">Área Privativa</div>
+    <div class="metric-card-value"><span id="card_area_privativa">{{ projeto.area_privativa|fmt_br }}</span> m²</div>
+            </div>
+            <div class="metric-card card-green">
+                <div class="metric-card-title">Área Equivalente</div>
+    <div class="metric-card-value"><span id="card_area_equivalente">{{ resultados.area_equivalente_total|fmt_br }}</span> m²</div>
+            </div>
+            <div class="metric-card card-red">
+                <div class="metric-card-title">Relação AP/AC <span style="font-size:0.8em; color:#888;">(Área Privativa/Área Construída)</span></div>
+                <div class="metric-card-value">
+                    {% if resultados.area_construida_total > 0 %}
+            <span id="card_rel_ap_ac">{{ resultados.area_privativa_total|div:resultados.area_construida_total|fmt_br }}</span>
+                    {% else %}
+            <span id="card_rel_ap_ac">0,00</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    
+
+    <h2 class="section-title" style="margin-top: 24px;">Custo Direto por Etapa da Obra</h2>
+    <div class="table-container">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Etapa</th>
+                    <th style="text-align:right;">Percentual (%)</th>
+                    <th style="text-align:right;">Custo (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in tabela_etapas %}
+                <tr>
+                    <td>{{ row.etapa }}</td>
+                    <td style="text-align:right">{{ row.percentual|floatformat:2 }}</td>
+                    <td style="text-align:right">R$ {{ row.custo|fmt_br }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>

@@ -1,0 +1,145 @@
+{% load fmt_br %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estudo de Viabilidade - Prognoz</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+    .hero { height:300px; background: linear-gradient(135deg,#3f37ff,#6b8cff); position:relative; display:flex; align-items:center; justify-content:center; }
+    .hero-shapes { position:absolute; inset:0; background: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.05), transparent 10%), linear-gradient(120deg, rgba(255,255,255,0.02), transparent); }
+    .hero-card { background:#fff; width:540px; padding:28px; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.12); text-align:center; }
+    .hero-logo { font-weight:700; color:#3f37ff; margin-bottom:8px; }
+    .stages { display:flex; gap:14px; }
+    .stage-card { display:block; flex:1 1 240px; background:#fff; padding:12px 14px; border-radius:6px; text-decoration:none; color:inherit; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+    .stage-card .stage-number { font-size:0.85em; color:#333; opacity:0.8; }
+    .stage-card .stage-title { font-weight:700; margin-top:6px; }
+    .stage-card .stage-cta { margin-top:8px; color:#666; }
+    .stage-1 { background:linear-gradient(90deg,#ffffff,#ffffff); }
+    .stage-2 { background:linear-gradient(90deg,#4659f3,#6f46f3); color:#fff; }
+    .stage-3 { background:linear-gradient(90deg,#5530ff,#6e4dff); color:#fff; }
+    .stage-4 { background:linear-gradient(90deg,#9b8ef8,#b9a8ff); color:#fff; }
+    .recent-projects { display:flex; gap:12px; flex-wrap:wrap; }
+    .recent-card { flex:1 1 320px; background:#fff; padding:14px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+    .recent-title { font-weight:700; }
+    .recent-sub { color:#666; margin-top:6px; }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+        h1, h2, h3 { color: #1f618d; }
+        h1 { font-size: 2.5em; margin-bottom: 5px; }
+        p.subtitle { color: #666; font-style: italic; margin-bottom: 20px; }
+
+        .form-container, .table-container {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .styled-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .styled-form input[type="text"], .styled-form input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 15px;
+        }
+        .styled-form button {
+            width: 100%;
+        }
+
+        table.styled-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table.styled-table thead {
+            background-color: #f2f2f2;
+        }
+        table.styled-table th, table.styled-table td {
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 1em;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        button.action-button {
+            background-color: #28a745;
+        }
+        button.action-button:hover {
+            background-color: #218838;
+        }
+        button.delete-button {
+            background-color: #dc3545;
+        }
+        button.delete-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    
+
+    <div class="container" style="margin-top:22px;">
+        <h1 style="margin-bottom:8px;">Selecione a etapa do seu projeto</h1>
+        <h2>➕ Criar Novo Projeto</h2>
+        <div class="form-container" id="create-form">
+            <form class="styled-form" method="post" action="{% url 'pagina_inicial' %}">
+                {% csrf_token %}
+                <label for="id_nome">Nome do Novo Projeto:</label>
+                <input type="text" id="id_nome" name="nome" required>
+                <label for="id_area_terreno">Área Terreno (m²):</label>
+                <input type="number" id="id_area_terreno" name="area_terreno" step="0.01" required value="{{ projeto.area_terreno|default_if_none:'' }}">
+                <label for="id_area_privativa">Área Privativa Total (m²):</label>
+                <input type="number" id="id_area_privativa" name="area_privativa" step="0.01" required value="{{ projeto.area_privativa|default_if_none:'' }}">
+                <label for="id_num_unidades">Nº de Unidades:</label>
+                <input type="number" id="id_num_unidades" name="num_unidades" step="1" required value="{{ projeto.num_unidades|default_if_none:'' }}">
+                <button type="submit">💾 Criar e Carregar Projeto</button>
+            </form>
+        </div>
+        
+
+        <h2 style="margin-top:28px;">Projetos acessados recentemente</h2>
+        <div class="recent-projects">
+            {% for projeto in projetos|slice:":3" %}
+            <div class="recent-card">
+                <div class="recent-title">{{ projeto.nome }}</div>
+                <div class="recent-sub">{{ projeto.get_status_display|default:"Obra" }}</div>
+                <div style="margin-top:10px;"><a href="{% url 'resultados' projeto.id %}"><button class="action-button">Abrir</button></a></div>
+            </div>
+            {% empty %}
+            <div>Nenhum projeto recente.</div>
+            {% endfor %}
+        </div>
+    </div>
+    
+</body>
+</html>

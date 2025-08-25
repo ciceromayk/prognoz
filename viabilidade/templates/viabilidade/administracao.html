@@ -1,0 +1,233 @@
+{% load fmt_br %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração da Obra - {{ projeto.nome }}</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+        h1, h2, h3 { color: #1f618d; }
+        h1 { font-size: 2.5em; margin-bottom: 5px; }
+        p.subtitle { color: #666; font-style: italic; margin-bottom: 20px; }
+        
+        .metric-cards-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .metric-card {
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            width: 30%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .metric-card-title {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .metric-card-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin: 0;
+        }
+        .card-mensal { background: linear-gradient(145deg, #e6f2ff, #cce5ff); }
+        .card-mensal .metric-card-value { color: #0056b3; }
+        .card-duracao { background: linear-gradient(145deg, #f0fff0, #d9f7d9); }
+        .card-duracao .metric-card-value { color: #28a745; }
+        .card-total { background: linear-gradient(145deg, #fff5e6, #ffe0b3); }
+        .card-total .metric-card-value { color: #ff7f00; }
+
+        .table-container {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        table.styled-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table.styled-table thead {
+            background-color: #f2f2f2;
+        }
+        table.styled-table th, table.styled-table td {
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            text-align: center;
+            font-size: 1em;
+        }
+        table.styled-table input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            text-align: right;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .navigation-buttons button {
+            background-color: #6c757d;
+            border: none;
+        }
+        .navigation-buttons button:hover {
+            background-color: #5a6268;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        button:hover { background-color: #0056b3; }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+    {% include 'viabilidade/_menu_lateral.html' %}
+    <div class="container">
+        <h1>📝 Administração da Obra</h1>
+        <p class="subtitle">Projeto: {{ projeto.nome }}</p>
+        
+        <h2>Resumo Financeiro</h2>
+        <div class="metric-cards-container">
+            <div class="metric-card card-mensal">
+                <div class="metric-card-title">Custo Mensal Total</div>
+                <div class="metric-card-value" id="custo-mensal-total">R$ {{ resultados.total_mensal|fmt_br }}</div>
+            </div>
+            <div class="metric-card card-duracao">
+                <div class="metric-card-title">Duração da Obra (meses)</div>
+                <div class="metric-card-value" id="duracao-obra">{{ duracao_obra }}</div>
+            </div>
+            <div class="metric-card card-total">
+                <div class="metric-card-title">Custo Indireto de Obra Total</div>
+                <div class="metric-card-value" id="custo-obra-total">R$ {{ resultados.total_obra|fmt_br }}</div>
+            </div>
+        </div>
+
+        <h2>Configuração dos Custos Indiretos da Obra</h2>
+        <form id="save-form" method="post" action="{% url 'salvar_administracao_obra' projeto.id %}">
+            {% csrf_token %}
+            <!-- O slider de duração foi movido para fora da tabela -->
+            <div class="slider-container">
+                <label for="duracao_obra_slider">Duração da Obra (meses):</label>
+                <input type="range" id="duracao_obra_slider" name="duracao_obra" value="{{ duracao_obra }}" min="1" max="60" oninput="document.getElementById('duracao_obra_display').value=this.value; updateTotals();">
+                <input type="number" id="duracao_obra_display" value="{{ duracao_obra }}" min="1" max="60" oninput="document.getElementById('duracao_obra_slider').value=this.value; updateTotals();">
+            </div>
+            
+            <div class="table-container">
+                <table class="styled-table">
+                    <colgroup>
+                        <col style="width: 66%;">
+                        <col style="width: 14%;">
+                        <col style="width: 20%;">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Custo Mensal (R$)</th>
+                            <th>Custo Total (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item, valor in custos_mensais.items %}
+                        <tr>
+                            <td>{{ item }}</td>
+                            <td>
+                                <input type="number" name="custo_mensal_{{ item }}" value="{{ valor }}" step="0.01" min="0" oninput="updateTotals()">
+                            </td>
+                            <td>
+                                <span class="custo-total-item">
+                                    R$ {{ valor|mul:duracao_obra|fmt_br }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:30px;">
+            <button type="submit" form="save-form">Salvar Alterações</button>
+        </div>
+    </div>
+    
+    <script>
+        function updateTotals() {
+            const duracaoObra = parseFloat(document.getElementById('duracao_obra_slider').value);
+            let totalMensal = 0;
+            
+            document.querySelectorAll('input[name^="custo_mensal_"]').forEach(input => {
+                totalMensal += parseFloat(input.value) || 0;
+            });
+            
+            const custoObraTotal = totalMensal * duracaoObra;
+            document.getElementById('custo-mensal-total').textContent = 'R$ ' + formatCurrency(totalMensal);
+            document.getElementById('duracao-obra').textContent = duracaoObra;
+            document.getElementById('custo-obra-total').textContent = 'R$ ' + formatCurrency(custoObraTotal);
+
+            // Atualiza os totais por item
+            document.querySelectorAll('input[name^="custo_mensal_"]').forEach(input => {
+                const row = input.closest('tr');
+                const custoMensal = parseFloat(input.value) || 0;
+                const custoTotal = custoMensal * duracaoObra;
+                const span = row.querySelector('.custo-total-item');
+                if (span) {
+                    span.textContent = 'R$ ' + formatCurrency(custoTotal);
+                }
+            });
+        }
+
+        function formatCurrency(value) {
+            if (value === null || value === undefined || isNaN(value)) {
+                return "0,00";
+            }
+            return value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        window.onload = updateTotals;
+    </script>
+</body>
+</html>
