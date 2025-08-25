@@ -1,0 +1,35 @@
+<!-- viabilidade/templates/viabilidade/pdf_report.html -->
+{% load fmt_br %} 
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- A folha de estilo original do PDF aqui -->
+    <style>
+        /* ... seu CSS do PDF original ... */
+    </style>
+</head>
+<body>
+    <!-- Capa do relatório -->
+    <div class="cover-page">
+        <h1>Relatório de Viabilidade de Empreendimento</h1>
+        <h2>{{ projeto.nome }}</h2>
+        <p>Gerado em: {{ data_geracao|date:"d/m/Y H:i" }}</p>
+    </div>
+    
+    <!-- Resto do conteúdo do relatório, com as variáveis do Django -->
+    <!-- Por exemplo: -->
+    <h2>Resumo Financeiro</h2>
+    <!-- Aqui você renderiza os cartões de métricas -->
+    <p>VGV Total: R$ {{ vgv_total|fmt_br }}</p>
+    <!-- ... e assim por diante para todas as tabelas e dados ... -->
+    
+    <!-- Seção de Análise gerada por IA (se existir) -->
+    {% if projeto.analise_ia %}
+    <h2>Análise de Viabilidade (Gerada por I.A.)</h2>
+    <div class="ia-analysis-pdf">
+        {{ projeto.analise_ia|linebreaksbr }}
+    </div>
+    {% endif %}
+</body>
+</html>

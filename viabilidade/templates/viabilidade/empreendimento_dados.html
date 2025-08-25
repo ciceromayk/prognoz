@@ -1,0 +1,247 @@
+{% load fmt_br %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <title>Dados do Empreendimento - {{ projeto.nome }}</title>
+    <style>
+        body { font-family: 'Roboto', sans-serif; background:#f0f2f5; color:#333; }
+    .container { max-width:1200px; margin:20px auto; background:#fff; padding:16px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06);} 
+    label {display:block; margin:4px 0 4px 0; font-weight:600; font-size:0.95em}
+    input[type=text], input[type=number] { width:100%; padding:4px; border:1px solid #ccc; border-radius:4px; box-sizing: border-box; font-size:0.92em }
+    button { margin-top:6px; padding:6px 10px; background:#28a745; color:#fff; border:none; border-radius:6px; font-size:0.95em }
+        /* metric-card styles from custos_diretos */
+        .metric-cards-container { display:flex; gap:18px; margin:12px 0; }
+        .metric-card { flex:1; padding:14px; border-radius:8px; color:#fff; box-shadow:0 2px 10px rgba(0,0,0,0.06); }
+        .metric-card .metric-card-title { font-size:12px; opacity:0.9 }
+        .metric-card .metric-card-value { font-size:20px; font-weight:700; margin-top:6px }
+        .card-red { background:linear-gradient(135deg,#e74c3c,#c0392b); }
+        .card-blue { background:linear-gradient(135deg,#3498db,#2471a3); }
+        .card-green { background:linear-gradient(135deg,#2ecc71,#27ae60); }
+        .card-orange { background:linear-gradient(135deg,#f39c12,#d68910); }
+    /* form rows for empreendimento data */
+    .proj-box { margin-top:12px; background:#eaf6ea; padding:6px 8px; border-radius:6px; }
+    .proj-subtitle { margin:2px 0 6px; font-size:13px; font-weight:700; color:#2d6a2d }
+    .form-row { display:flex; gap:6px; align-items:center; }
+    .form-row .form-group { flex:1; min-width:0; }
+    @media (max-width:720px) { .form-row { flex-direction:column; gap:6px; } }
+        .table-container {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        table.styled-table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+        }
+        table.styled-table thead {
+            background-color: #e5e7eb;
+        }
+        table.styled-table th, table.styled-table td {
+            border: 1px solid #e0e0e0;
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 0.95em;
+        }
+        table.styled-table th {
+            text-align: center;
+        }
+        table.styled-table td.area-eq-total,
+        table.styled-table td.area-constr-total {
+            text-align: center !important;
+        }
+        table.styled-table input[type="text"], table.styled-table input[type="number"] {
+            padding: 6px 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            text-align: right;
+            width: 100%;
+            background: #fff;
+        }
+        /* fix column widths so table doesn't overflow */
+        table.styled-table th:nth-child(1) { width: 12%; }
+        table.styled-table th:nth-child(2) { width: 25%; }
+        table.styled-table th:nth-child(3) { width: 5%; }
+        table.styled-table th:nth-child(4) { width: 10%; }
+        table.styled-table th:nth-child(5) { width: 22%; }
+        table.styled-table th:nth-child(6) { width: 10%; }
+        table.styled-table th:nth-child(7) { width: 10%; }
+        table.styled-table th:nth-child(8) { width: 5%; }
+        table.styled-table td:nth-child(4), table.styled-table td:nth-child(5) {
+            text-align: right;
+        }
+        table.styled-table td:nth-child(3) {
+            text-align: center;
+        }
+    /* slider appearance tweaks */
+    input[type=range] { height:10px; max-width:110px; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width:8px; height:12px; border-radius:50%; background:#1673b8; }
+    /* ensure coef column doesn't wrap and has enough room */
+    table.styled-table th:nth-child(5), table.styled-table td:nth-child(5) { min-width: 220px; }
+    </style>
+</head>
+<body>
+    {% include 'viabilidade/_menu_lateral.html' %}
+    <div class="container">
+        <h1>Dados do Empreendimento</h1>
+        <div class="metric-cards-container" style="flex-wrap:nowrap; gap:12px;">
+            <div class="metric-card card-red">
+                <div class="metric-card-title">Custo Direto Total</div>
+                <div class="metric-card-value">R$ <span id="card_custo_direto">{{ resultados.custo_direto_total|default:0|fmt_br }}</span></div>
+            </div>
+            <div class="metric-card card-blue">
+                <div class="metric-card-title">Custo por m²</div>
+                <div class="metric-card-value">R$ <span id="card_custo_m2">{{ custo_m2|fmt_br }}</span></div>
+            </div>
+            <div class="metric-card card-orange">
+                <div class="metric-card-title">Área Construída</div>
+                <div class="metric-card-value"><span id="card_area_construida">{{ resultados.area_construida_total|default:0|floatformat:2 }}</span> m²</div>
+            </div>
+        </div>
+        <!-- hidden spans to allow JS update without breaking if not visible as cards -->
+        <div style="display:none;">
+            <span id="card_area_construida_2">{{ resultados.area_construida_total|default:0|floatformat:2 }}</span>
+            <span id="card_area_equivalente">{{ resultados.area_equivalente_total|default:0|floatformat:2 }}</span>
+            <span id="card_area_privativa">{{ resultados.area_privativa_total|default:0|floatformat:2 }}</span>
+            <span id="card_custo_unidade">{{ resultados.custo_unidade|default:0 }}</span>
+            <span id="card_rel_ap_ac">0.00</span>
+        </div>
+    <!-- shared JS loaded below -->
+        <!-- Dados do Empreendimento (moved para logo abaixo dos cards) -->
+    <input type="hidden" id="custo_area_privativa" value="{{ projeto.custos_config.custo_area_privativa|default:0 }}">
+    <input type="hidden" id="projeto_num_unidades_hidden" value="{{ projeto.num_unidades|default:1 }}">
+
+    <form method="post" action="{% url 'salvar_empreendimento_dados' projeto.id %}" class="proj-box">
+        {% csrf_token %}
+        <div class="proj-subtitle">Dados do Empreendimento</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Nome do Projeto</label>
+                <input type="text" name="nome" value="{{ projeto.nome }}">
+            </div>
+            <div class="form-group">
+                <label>Área do Terreno (m²)</label>
+                <input type="number" step="0.01" name="area_terreno" value="{{ projeto.area_terreno }}">
+            </div>
+            <div class="form-group">
+                <label>Área Privativa (m²)</label>
+                    <input type="number" step="0.01" name="area_privativa" value="{{ projeto.area_privativa }}">
+            </div>
+            <div class="form-group">
+                <label>Número de Unidades</label>
+                <input type="number" id="proj_num_unidades_input" name="num_unidades" value="{{ projeto.num_unidades }}">
+            </div>
+        </div>
+
+        <div class="proj-subtitle" style="margin-top:14px;">Custos Paramétricos</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Custo Terreno (R$/m²)</label>
+                <input type="number" step="0.01" name="custo_terreno_m2" value="{{ projeto.custos_config.custo_terreno_m2|default:0 }}">
+            </div>
+            <div class="form-group">
+                <label>Custo Área Privativa (R$/m²)</label>
+                <input type="number" step="0.01" name="custo_area_privativa" value="{{ projeto.custos_config.custo_area_privativa|default:0 }}">
+            </div>
+            <div class="form-group">
+                <label>Preço Médio de Venda (R$/m²)</label>
+                <input type="number" step="0.01" name="preco_medio_venda_m2" value="{{ projeto.custos_config.preco_medio_venda_m2|default:0 }}">
+            </div>
+        </div>
+
+        <div style="text-align:right;"><button type="submit">Salvar</button></div>
+    </form>
+
+        <h2 style="text-align:left;">Dados dos Pavimentos</h2>
+        <div class="table-container etapas-table-container">
+            <form id="pavimento-form" method="post" action="{% url 'salvar_custos_diretos' projeto.id %}">
+                {% csrf_token %}
+                <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items:center; gap: 10px;">
+                    <div style="display:flex; gap:10px;">
+                        <form method="post" action="{% url 'adicionar_pavimento' projeto.id %}" style="display:inline-block;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-button" style="background:#28a745;">➕ Adicionar Pavimento</button>
+                        </form>
+                        <button type="submit" form="pavimento-form" class="action-button">Salvar Alterações</button>
+                    </div>
+                    <div style="color:#666; font-size:0.9em;">Edite os pavimentos abaixo e clique em "Salvar Alterações" para aplicar.</div>
+                </div>
+
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tipo</th>
+                            <th>Rep</th>
+                            <th>Área (m²)</th>
+                            <th>Coef.</th>
+                            <th>Área Eq. (m²)</th>
+                            <th>Área Constr. (m²)</th>
+                            <th>Desc.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pav in pavimentos %}
+                        <tr>
+                            <td><input type="text" name="nome_{{ pav.id }}" value="{{ pav.nome }}"></td>
+                            <td>
+                                <select name="tipo_{{ pav.id }}">
+                                    {% for t_key, t_vals in tipos_pavimento.items %}
+                                    <option value="{{ t_key }}" {% if pav.tipo == t_key %}selected{% endif %}>{{ t_key }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="number" min="1" name="rep_{{ pav.id }}" value="{{ pav.rep }}"></td>
+                            <td><input type="number" step="0.01" name="area_{{ pav.id }}" value="{{ pav.area }}"></td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    {% comment %} determine min/max for this pav.tipo {% endcomment %}
+                                    {% for t_key, t_vals in tipos_pavimento.items %}
+                                        {% if t_key == pav.tipo %}
+                                            {% with min_val=t_vals.0 max_val=t_vals.1 %}
+                                                <input type="range" id="coef_range_{{ pav.id }}" min="{{ min_val }}" max="{{ max_val }}" step="0.01" value="{{ pav.coef }}" style="flex:1;">
+                                            {% endwith %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    <input type="number" step="0.01" name="coef_{{ pav.id }}" value="{{ pav.coef }}" style="width:80px;">
+                                </div>
+                            </td>
+                            <td id="area_eq_{{ pav.id }}" class="area-eq-total">0.00</td>
+                            <td id="area_constr_{{ pav.id }}" class="area-constr-total" style="text-align:center;">0.00</td>
+                            <td style="text-align:center;"><input type="checkbox" name="excluir_{{ pav.id }}" {% if not pav.constr %}checked{% endif %}></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="8">Nenhum pavimento cadastrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            <!-- finish pavimentos form -->
+            </form>
+    </div>
+    <!-- load pavimentos JS -->
+    {{ tipos_pavimento|json_script:"tiposPavimento" }}
+    <script>
+        try {
+            window.__tiposPavimentoJSON = JSON.parse(document.getElementById('tiposPavimento').textContent || '{}');
+        } catch(e) { window.__tiposPavimentoJSON = {}; console.error('erro parsing tiposPavimento', e); }
+    </script>
+    <script src="{% static 'viabilidade/pavimentos.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            try {
+                console.log('empreendimento_dados: pavimentos.js should be loaded. Running recalcTotais()');
+                if (typeof recalcTotais === 'function') recalcTotais();
+            } catch(e) { console.error('erro executando recalcTotais:', e); }
+        });
+    </script>
+    <!-- cliente: conversão de formatos removida por solicitação do usuário -->
+</body>
+</html>

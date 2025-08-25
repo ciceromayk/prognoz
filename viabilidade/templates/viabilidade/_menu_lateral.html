@@ -1,0 +1,37 @@
+{% load static %}
+<div id="menu-lateral" style="width:220px;min-height:100vh;position:fixed;left:0;top:0;background:#f8f9fa;border-right:1px solid #e0e0e0;z-index:100;display:flex;flex-direction:column;align-items:center;padding:32px 0 0 0;box-shadow:2px 0 8px rgba(0,0,0,0.03);">
+    <div style="margin-bottom:32px;">
+    <img src="{% static 'viabilidade/arkitekt.svg' %}" alt="Logo" style="max-width:140px;max-height:70px;">
+    </div>
+    <nav style="width:100%;display:flex;flex-direction:column;gap:16px;">
+    <a href="{% url 'pagina_inicial' %}" class="menu-link"><span class="menu-icon">🏠</span>Início</a>
+    <a href="{% url 'empreendimento_dados' projeto.id %}" class="menu-link">� Dados do Empreendimento</a>
+    <a href="{% url 'custos_indiretos' projeto.id %}" class="menu-link">💸 Custos Indiretos</a>
+    <a href="{% url 'administracao_obra' projeto.id %}" class="menu-link">📝 Adm. da Obra</a>
+    <a href="{% url 'custos_diretos' projeto.id %}" class="menu-link">🏗️ Custos Diretos</a>
+    <a href="{% url 'resultados' projeto.id %}" class="menu-link">📈 Resultados</a>
+    </nav>
+</div>
+<style>
+.menu-link {
+    display: block;
+    padding: 12px 24px;
+    color: #1f618d;
+    text-decoration: none;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+    font-size: 1.1em;
+}
+.menu-link:hover {
+    background: #e5e7eb;
+    color: #0056b3;
+}
+.menu-icon { margin-right:10px; font-size:1.05em; vertical-align:middle; }
+body { margin-left: 220px !important; }
+@media (max-width: 900px) {
+    #menu-lateral { position:relative; width:100%; min-height:auto; flex-direction:row; padding:0; box-shadow:none; border-right:none; border-bottom:1px solid #e0e0e0; }
+    .menu-link { display:inline-block; padding:10px 12px; font-size:1em; }
+    body { margin-left:0 !important; }
+}
+</style>

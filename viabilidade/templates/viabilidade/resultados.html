@@ -1,0 +1,323 @@
+{% load fmt_br %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados - {{ projeto.nome }}</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+        h1, h2, h3 { color: #1f618d; }
+        h1 { font-size: 2.5em; margin-bottom: 5px; }
+        p.subtitle { color: #666; font-style: italic; margin-bottom: 20px; }
+        
+        .metric-cards-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .metric-card-title {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .metric-card-value {
+            font-size: 1.6em; /* Diminui o tamanho da fonte */
+            font-weight: bold;
+            margin: 0;
+            white-space: nowrap; /* Evita quebra de linha */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .card-blue { background: linear-gradient(145deg, #e6f2ff, #cce5ff); }
+        .card-blue .metric-card-value { color: #0056b3; }
+        .card-green { background: linear-gradient(145deg, #f0fff0, #d9f7d9); }
+        .card-green .metric-card-value { color: #28a745; }
+        .card-orange { background: linear-gradient(145deg, #fff5e6, #ffe0b3); }
+        .card-orange .metric-card-value { color: #ff7f00; }
+        .card-red { background: linear-gradient(145deg, #ffe6e6, #ffcccc); }
+        .card-red .metric-card-value { color: #dc3545; }
+
+        .composition-cards-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .composition-card {
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        @media (max-width: 1200px) {
+            .metric-cards-container,
+            .composition-cards-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 700px) {
+            .metric-cards-container,
+            .composition-cards-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .composition-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+        .button-link {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .button-link:hover { background-color: #0056b3; }
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .navigation-buttons button {
+            background-color: #6c757d;
+            border: none;
+        }
+        .navigation-buttons button:hover {
+            background-color: #5a6268;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        button:hover { background-color: #0056b3; }
+        .ai-analysis {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .ai-analysis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.15em;
+            font-weight: 700;
+            color: #1f618d;
+            gap: 8px;
+        }
+        .ai-analysis-content {
+            display: none;
+            margin-top: 14px;
+        }
+        .ai-analysis-content.show { display: block; }
+        .ai-analysis-content h3 {
+            font-size: 1.2em;
+            color: #1a5276;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+        /* Modal (popup) styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 9999; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+            padding: 40px 20px;
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 20px 25px;
+            border-radius: 10px;
+            max-width: 900px;
+            box-shadow: 0 6px 30px rgba(0,0,0,0.2);
+            max-height: 80vh;
+            overflow: auto;
+        }
+        .modal-close {
+            float: right;
+            background: transparent;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+    .analysis-section-title { font-weight: 700; color: #0b5a88; margin-top: 14px; }
+    .analysis-paragraph { margin: 8px 0; color: #333; font-size: 0.95em; }
+    .analysis-list { margin: 8px 0 14px 20px; }
+    .analysis-preview { background: #fbfcfd; border: 1px solid #eef3f8; padding: 12px; border-radius: 8px; }
+    .analysis-actions { margin-top: 12px; display:flex; gap:10px; }
+    .analysis-actions .button-link { padding: 8px 14px; }
+    </style>
+</head>
+<body>
+    {% include 'viabilidade/_menu_lateral.html' %}
+    <div class="container">
+        <h1>📈 Resultados e Indicadores Chave</h1>
+        <p class="subtitle">Projeto: {{ projeto.nome }}</p>
+        
+        <h2>Resultados Financeiros</h2>
+        <div class="metric-cards-container">
+            <div class="metric-card card-blue">
+                <div class="metric-card-title">VGV Total</div>
+                <div class="metric-card-value">R$ {{ vgv_total|fmt_br }}</div>
+            </div>
+            <div class="metric-card card-green">
+                <div class="metric-card-title">Custo Total</div>
+                <div class="metric-card-value">R$ {{ custo_total_despesas|fmt_br }}</div>
+            </div>
+            <div class="metric-card card-orange">
+                <div class="metric-card-title">Lucro Bruto</div>
+                <div class="metric-card-value">R$ {{ lucratividade_valor|fmt_br }}</div>
+            </div>
+            <div class="metric-card card-red">
+                <div class="metric-card-title">Margem de Lucro</div>
+                <div class="metric-card-value">{{ lucratividade_percentual|fmt_br }}%</div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <div class="navigation-buttons">
+                <form method="post" action="{% url 'gerar_analise_ia' projeto.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Gerar Análise com I.A.</button>
+                </form>
+                <a href="{% url 'download_analise_ia' projeto.id %}" class="button-link" style="margin-left:10px;">Download .txt</a>
+            </div>
+            <div></div>
+        </div>
+
+        <h2>Composição do Custo Total</h2>
+        <div class="composition-cards-container">
+            <div class="composition-card" style="background: linear-gradient(145deg, #f0fff0, #d9f7d9);">
+                <div class="metric-card-title">Custo Direto ({{ p_direto|fmt_br }}%)</div>
+                <div class="metric-card-value">R$ {{ custo_direto_total|fmt_br }}</div>
+            </div>
+            <div class="composition-card" style="background: linear-gradient(145deg, #e6f2ff, #cce5ff);">
+                <div class="metric-card-title">Indiretos Venda ({{ p_indireto_venda|fmt_br }}%)</div>
+                <div class="metric-card-value">R$ {{ custo_indireto_venda|fmt_br }}</div>
+            </div>
+            <div class="composition-card" style="background: linear-gradient(145deg, #fff5e6, #ffe0b3);">
+                <div class="metric-card-title">Indiretos Obra ({{ p_indireto_obra|fmt_br }}%)</div>
+                <div class="metric-card-value">R$ {{ custo_indireto_obra|fmt_br }}</div>
+            </div>
+            <div class="composition-card" style="background: linear-gradient(145deg, #ffe6e6, #ffcccc);">
+                <div class="metric-card-title">Custo do Terreno ({{ p_terreno|fmt_br }}%)</div>
+                <div class="metric-card-value">R$ {{ custo_terreno_total|fmt_br }}</div>
+            </div>
+        </div>
+
+        <h2>Análise de Viabilidade com I.A.</h2>
+        <div class="ai-analysis">
+            <div class="ai-analysis-header" onclick="toggleAnalysis()">
+                <div style="display: flex; align-items: center;">
+                    <span>🤖</span> Análise Gerada por I.A.
+                </div>
+                <span>▶</span>
+            </div>
+            <div id="ai-analysis-content" class="ai-analysis-content">
+                {% if projeto.analise_ia %}
+                    <div id="analysis-preview">
+                        {{ projeto.analise_ia|safe|linebreaksbr }}
+                    </div>
+                    <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+                        <a href="{% url 'generate_pdf' projeto.id %}" class="button-link">Gerar PDF com Análise</a>
+                    </div>
+                {% else %}
+                    <p id="no-analysis-text">Nenhuma análise gerada. Clique no botão "Gerar Análise com I.A." para iniciar.</p>
+                    <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                        <div id="analysis-spinner" style="display:none;">Gerando análise... ⏳</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+
+    </div>
+    <script>
+        function toggleAnalysis() {
+            const content = document.getElementById('ai-analysis-content');
+            content.classList.toggle('show');
+        }
+    </script>
+    <!-- Pop-up removido: análise será exibida inline. -->
+    <script>
+        // AJAX: gerar análise sem reload (preencher preview inline)
+        (function(){
+            const form = document.querySelector('form[action$="/analise-ia/"]');
+            const spinner = document.getElementById('analysis-spinner');
+            const preview = document.getElementById('analysis-preview');
+            const noText = document.getElementById('no-analysis-text');
+            if (form) {
+                form.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    if (spinner) spinner.style.display = 'inline';
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': document.querySelector('input[name=csrfmiddlewaretoken]').value,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({})
+                    }).then(r => r.json()).then(data => {
+                        if (spinner) spinner.style.display = 'none';
+                        if (data && data.analise) {
+                            if (preview) preview.innerHTML = data.analise.replace(/\n/g, '<br>');
+                            if (noText) noText.style.display = 'none';
+                        }
+                    }).catch(err => {
+                        if (spinner) spinner.style.display = 'none';
+                        alert('Erro ao gerar análise: ' + err);
+                    });
+                });
+            }
+        })();
+    </script>
+</body>
+</html>
